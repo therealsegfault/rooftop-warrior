@@ -5,5 +5,6 @@ public enum GameState {
     LADDER,
     ROOFTOP,
     LADDER_DOWN,
-    CHASE
+    CHASE,
+    LATE
 }

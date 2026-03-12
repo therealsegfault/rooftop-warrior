@@ -182,6 +182,25 @@ public class RooftopScene {
         if (overLadder && isGrounded && Gdx.input.isKeyJustPressed(Keys.S)) {
             onLadderDown = true; autoDescending = true;
         }
+
+        // Sanity check — if Wave thinks she's grounded but isn't on any surface, drop her
+        if (isGrounded && waveY > GROUND_Y) {
+            boolean onSurface = false;
+            for (float[] p : PLATFORMS) {
+                float pWorldX    = p[0];
+                float topSurface = p[1];
+                float pw         = p[2];
+                boolean overlapsX = waveWorldX + WAVE_W - 6f > pWorldX
+                                 && waveWorldX + 6f < pWorldX + pw;
+                if (overlapsX && Math.abs(waveY - topSurface) < 4f) {
+                    onSurface = true;
+                    break;
+                }
+            }
+            if (!onSurface) {
+                isGrounded = false;
+            }
+        }
     }
 
     private void updateLadderDown(float delta) {
