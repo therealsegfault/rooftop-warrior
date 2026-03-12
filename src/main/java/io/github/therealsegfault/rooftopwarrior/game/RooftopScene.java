@@ -3,6 +3,7 @@ package io.github.therealsegfault.rooftopwarrior.game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -17,34 +18,15 @@ public class RooftopScene {
     private Texture waveTexture;
     private Texture skyTexture;
 
+    private static final float SW    = 960f;
+    private static final float SH    = 480f;
+    private static final float SKY_W = 1920f;
+    private static final float SKY_H = 1080f;
+
     private static final float GROUND_Y      = 120f;
     private static final float WAVE_SCREEN_X = 200f;
     private static final float WAVE_W        = 64f;
     private static final float WAVE_H        = 64f;
-    private static final float SW            = 960f;
-    private static final float SH            = 480f;
-    private static final float SKY_W         = 1920f;
-    private static final float SKY_H         = 1080f;
-
-    // Wave world position
-    private float waveWorldX  = 0f;
-    private float waveY       = GROUND_Y;
-    private float velX        = 0f;
-    private float velY        = 0f;
-    private boolean isGrounded      = true;
-    private boolean hasDoubleJump   = true;
-    private boolean isDashing       = false;
-    private boolean droppingThrough = false;
-    private float dashTimer    = 0f;
-    private float dashCooldown = 0f;
-
-    // Ladder down
-    private boolean onLadderDown   = false;
-    private boolean autoDescending = false;
-    private static final float LADDER_DOWN_WORLD_X = 2600f;
-    private static final float LADDER_W             = 24f;
-    private static final float LADDER_H             = 200f;
-    private static final float CLIMB_SPEED          = 220f;
 
     // Movement
     private static final float WALK_SPEED    = 160f;
@@ -62,6 +44,26 @@ public class RooftopScene {
     private static final float MID_MULT    = 0.40f;
     private static final float DETAIL_MULT = 0.95f;
 
+    // Wave world position
+    private float waveWorldX = 0f;
+    private float waveY      = GROUND_Y;
+    private float velX       = 0f;
+    private float velY       = 0f;
+    private boolean isGrounded      = true;
+    private boolean hasDoubleJump   = true;
+    private boolean isDashing       = false;
+    private boolean droppingThrough = false;
+    private float dashTimer    = 0f;
+    private float dashCooldown = 0f;
+
+    // Ladder down
+    private boolean onLadderDown   = false;
+    private boolean autoDescending = false;
+    private static final float LADDER_DOWN_WORLD_X = 2600f;
+    private static final float LADDER_W            = 24f;
+    private static final float LADDER_H            = 200f;
+    private static final float CLIMB_SPEED         = 220f;
+
     private static final float PLATFORM_H = 16f;
     private static final float LEG_W      = 8f;
 
@@ -78,6 +80,8 @@ public class RooftopScene {
         {2100f, GROUND_Y + 90f,  500f },
     };
 
+    private OrthographicCamera screenCam;
+
     public RooftopScene(SpriteBatch batch, ShapeRenderer shapes,
                         BitmapFont font, SceneManager sceneManager) {
         this.batch        = batch;
@@ -86,20 +90,21 @@ public class RooftopScene {
         this.sceneManager = sceneManager;
         waveTexture = new Texture(Gdx.files.internal("sprites/wave.png"));
         skyTexture  = new Texture(Gdx.files.internal("sprites/sunset_sky_sunless.png"));
+        skyTexture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.ClampToEdge);
+
+        screenCam = new OrthographicCamera();
+        screenCam.setToOrtho(false, SW, SH);
     }
 
     public void enter() {
-        waveWorldX      = 0f;
-        waveY           = GROUND_Y;
-        velX            = 0f;
-        velY            = 0f;
-        isGrounded      = true;
-        onLadderDown    = false;
-        autoDescending  = false;
-        droppingThrough = false;
+        waveWorldX = 0f; waveY = GROUND_Y;
+        velX = 0f; velY = 0f;
+        isGrounded = true; onLadderDown = false;
+        autoDescending = false; droppingThrough = false;
     }
 
-    private float cameraX() { return waveWorldX - WAVE_SCREEN_X; }
+    // World X of the left edge of the viewport
+    private float camLeft() { return waveWorldX - WAVE_SCREEN_X; }
 
     public void update(float delta) {
         if (onLadderDown) { updateLadderDown(delta); return; }
@@ -114,17 +119,12 @@ public class RooftopScene {
         }
 
         if (Gdx.input.isKeyJustPressed(Keys.SHIFT_LEFT) && isGrounded && dashCooldown <= 0) {
-            isDashing    = true;
-            dashTimer    = DASH_DURATION;
-            dashCooldown = DASH_COOLDOWN;
-            velX         = DASH_SPEED;
+            isDashing = true; dashTimer = DASH_DURATION;
+            dashCooldown = DASH_COOLDOWN; velX = DASH_SPEED;
         }
 
-        // S + grounded = drop through
-        if (Gdx.input.isKeyJustPressed(Keys.S) && isGrounded && !onLadderDown) {
-            droppingThrough = true;
-            isGrounded      = false;
-            velY            = -50f;
+        if (Gdx.input.isKeyJustPressed(Keys.S) && isGrounded) {
+            droppingThrough = true; isGrounded = false; velY = -50f;
         }
         if (droppingThrough && velY < -100f) droppingThrough = false;
 
@@ -136,79 +136,51 @@ public class RooftopScene {
 
         boolean aHeld = Gdx.input.isKeyPressed(Keys.A);
         if (Gdx.input.isKeyJustPressed(Keys.SPACE) && isGrounded && aHeld) {
-            velX            = BACKFLIP_VX;
-            velY            = BACKFLIP_VY;
-            isGrounded      = false;
-            hasDoubleJump   = true;
-            isDashing       = false;
-            droppingThrough = false;
+            velX = BACKFLIP_VX; velY = BACKFLIP_VY;
+            isGrounded = false; hasDoubleJump = true;
+            isDashing = false; droppingThrough = false;
         } else if (Gdx.input.isKeyJustPressed(Keys.SPACE)) {
             if (isGrounded) {
-                velY            = JUMP_FORCE;
-                isGrounded      = false;
-                hasDoubleJump   = true;
-                droppingThrough = false;
+                velY = JUMP_FORCE; isGrounded = false;
+                hasDoubleJump = true; droppingThrough = false;
             } else if (hasDoubleJump) {
-                velY            = JUMP_FORCE;
-                hasDoubleJump   = false;
-                droppingThrough = false;
+                velY = JUMP_FORCE; hasDoubleJump = false; droppingThrough = false;
             }
         }
 
         waveWorldX += velX * delta;
         if (waveWorldX < WAVE_SCREEN_X) waveWorldX = WAVE_SCREEN_X;
 
-        if (!isGrounded) {
-            velY  += GRAVITY * delta;
-            waveY += velY * delta;
-        }
-
+        if (!isGrounded) { velY += GRAVITY * delta; waveY += velY * delta; }
         if (waveY <= GROUND_Y) {
-            waveY           = GROUND_Y;
-            velY            = 0f;
-            isGrounded      = true;
-            hasDoubleJump   = true;
-            droppingThrough = false;
+            waveY = GROUND_Y; velY = 0f; isGrounded = true;
+            hasDoubleJump = true; droppingThrough = false;
             if (!isDashing) velX = 0f;
         }
 
-        // Platform collision
+        // Platform collision — all in world space
         if (!droppingThrough) {
             for (float[] p : PLATFORMS) {
                 float pWorldX    = p[0];
                 float topSurface = p[1];
                 float pw         = p[2];
-
-                // Convert to screen for overlap check
-                float cam   = cameraX();
-                float px    = pWorldX - cam;
-                float waveL = WAVE_SCREEN_X + 6f;
-                float waveR = WAVE_SCREEN_X + WAVE_W - 6f;
-
-                boolean overlapsX   = waveR > px && waveL < px + pw;
+                boolean overlapsX   = waveWorldX + WAVE_W - 6f > pWorldX
+                                   && waveWorldX + 6f < pWorldX + pw;
                 boolean falling     = velY <= 0;
                 boolean nearSurface = waveY >= topSurface - Math.abs(velY * delta) - 2f
                                    && waveY <= topSurface + 4f;
-
                 if (overlapsX && falling && nearSurface) {
-                    waveY         = topSurface;
-                    velY          = 0f;
-                    velX          = 0f;
-                    isGrounded    = true;
-                    hasDoubleJump = true;
-                    isDashing     = false;
+                    waveY = topSurface; velY = 0f; velX = 0f;
+                    isGrounded = true; hasDoubleJump = true; isDashing = false;
                 }
             }
         }
 
-        // Ladder down grab
-        float cam        = cameraX();
-        float ladderSX   = LADDER_DOWN_WORLD_X - cam;
-        boolean overLadder = WAVE_SCREEN_X + WAVE_W > ladderSX
-                          && WAVE_SCREEN_X < ladderSX + LADDER_W;
+        // Ladder down — world space
+        boolean overLadder = waveWorldX + WAVE_W > LADDER_DOWN_WORLD_X
+                          && waveWorldX < LADDER_DOWN_WORLD_X + LADDER_W;
         if (overLadder && isGrounded && Gdx.input.isKeyJustPressed(Keys.S)) {
-            onLadderDown   = true;
-            autoDescending = true;
+            onLadderDown = true; autoDescending = true;
         }
     }
 
@@ -216,50 +188,42 @@ public class RooftopScene {
         if (autoDescending) {
             waveY -= CLIMB_SPEED * delta;
             if (waveY <= GROUND_Y - LADDER_H) {
-                autoDescending = false;
-                onLadderDown   = false;
+                autoDescending = false; onLadderDown = false;
                 sceneManager.transitionTo(GameState.CHASE);
             }
         }
     }
 
     public void draw() {
-        float cam = cameraX();
-
-        // Reset transform matrices at start of every frame
-        shapes.getTransformMatrix().idt();
-        shapes.updateMatrices();
-        batch.setTransformMatrix(batch.getTransformMatrix().idt());
-
         Gdx.gl.glClearColor(0.55f, 0.80f, 0.95f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // Sky — tiled, very slow parallax
+        float cam = camLeft();
+
+        batch.setProjectionMatrix(screenCam.combined);
+        shapes.setProjectionMatrix(screenCam.combined);
+
+        // ── Sky — tiled, very slow parallax ───────────────────────────────
         batch.begin();
-        float skyScale  = SH / SKY_H;
-        int skyDrawW  = (int)(SKY_W * skyScale) + 1; // +1 closes sub-pixel gap
-        float skyScroll = (cam * SKY_MULT) % skyDrawW;
-        float skyX = -(int)skyScroll - skyDrawW;
-        while (skyX < SW + skyDrawW) {
-            batch.draw(skyTexture, skyX, 0, skyDrawW, SH);
-            skyX += skyDrawW;
-        }
+        float skyScale = SH / SKY_H;
+        float skyDrawW = SKY_W * skyScale; // ~170px per tile at 480p
+        float skyOff   = (cam * SKY_MULT) % skyDrawW;
+        for (float x = -skyOff - skyDrawW; x < SW + skyDrawW; x += skyDrawW)
+            batch.draw(skyTexture, x, 0, skyDrawW, SH);
         batch.end();
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
 
         // Distant rooftop silhouettes
         shapes.setColor(0.15f, 0.15f, 0.18f, 1f);
-        float tileMid = 220f;
-        float midScroll = (cam * MID_MULT) % (tileMid * 8);
-        float midX = -midScroll;
+        float midOff = (cam * MID_MULT) % (220f * 8);
+        float midX = -midOff;
         int i = 0;
-        while (midX < SW + tileMid) {
+        while (midX < SW + 220f) {
             float h = 50f + (i % 4) * 20f;
             float w = 70f + (i % 3) * 25f;
             shapes.rect(midX, GROUND_Y + 10f, w, h);
-            midX += w + 30f;
-            i++;
+            midX += w + 30f; i++;
         }
 
         // Rooftop surface
@@ -268,7 +232,7 @@ public class RooftopScene {
         shapes.setColor(0.20f, 0.20f, 0.24f, 1f);
         shapes.rect(0, GROUND_Y - 6f, SW, 6f);
 
-        // Platforms
+        // Platforms — world → screen via cam
         for (float[] p : PLATFORMS) {
             float px         = p[0] - cam;
             float topSurface = p[1];
@@ -286,13 +250,13 @@ public class RooftopScene {
             drawHeatingBox(shapes, px, boxBottom, pw, PLATFORM_H);
         }
 
-        // AC units scrolling
-        shapes.setColor(0.38f, 0.38f, 0.42f, 1f);
-        float detailScroll = (cam * DETAIL_MULT) % 300f;
-        float dx = -detailScroll;
+        // AC units
+        float detailOff = (cam * DETAIL_MULT) % 300f;
+        float dx = -detailOff;
         while (dx < SW + 300f) {
-            shapes.rect(dx + 20f,  GROUND_Y, 40f, 20f);
-            shapes.rect(dx + 80f,  GROUND_Y, 15f, 35f);
+            shapes.setColor(0.38f, 0.38f, 0.42f, 1f);
+            shapes.rect(dx + 20f, GROUND_Y, 40f, 20f);
+            shapes.rect(dx + 80f, GROUND_Y, 15f, 35f);
             shapes.rect(dx + 120f, GROUND_Y, 25f, 15f);
             dx += 300f;
         }
