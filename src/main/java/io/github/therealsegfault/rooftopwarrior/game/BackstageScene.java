@@ -39,7 +39,7 @@ public class BackstageScene implements ActionListener {
     private final SceneManager      sceneManager;
 
     // Scene graph roots
-    private Node sceneNode; // attached to rootNode on enter, detached on exit
+    private Node sceneNode; // world geometry — attached to guiNode on enter
     private Node guiNode;   // reference to app.getGuiNode()
 
     // World constants — 2.5D orthographic, same pixel dimensions as before
@@ -211,6 +211,7 @@ public class BackstageScene implements ActionListener {
 
     @Override
     public void onAction(String name, boolean isPressed, float tpf) {
+        System.out.println("onAction: " + name + " pressed=" + isPressed);
         switch (name) {
             case "MoveRight": keyD     = isPressed; break;
             case "MoveLeft":  keyA     = isPressed; break;
@@ -223,38 +224,14 @@ public class BackstageScene implements ActionListener {
     // ── Lifecycle ─────────────────────────────────────────────────────────
 
     public void attach(Node root) {
-        root.attachChild(sceneNode);
+        // Everything on guiNode — screen space, pixel coords, no camera math needed.
+        guiNode.attachChild(sceneNode);
         guiNode.attachChild(convoBoxNode);
         guiNode.attachChild(promptNode);
-
-        // Orthographic camera — pixel-perfect, (0,0) = bottom-left
-        // jME setFrustum order: near, far, left, right, bottom, top
-        com.jme3.renderer.Camera cam = app.getCamera();
-        cam.setParallelProjection(true);
-        cam.setFrustumNear(-1000f);
-        cam.setFrustumFar(1000f);
-        cam.setFrustumLeft(0f);
-        cam.setFrustumRight(SW);
-        cam.setFrustumBottom(0f);
-        cam.setFrustumTop(SH);
-        // Position camera looking straight down -Z into the scene
-        cam.setLocation(new Vector3f(0f, 0f, 500f));
-        cam.lookAt(new Vector3f(0f, 0f, 0f), Vector3f.UNIT_Y);
-
-        // DEBUG — print camera state so we can see what it's actually doing
-        System.out.println("=== CAM DEBUG ===");
-        System.out.println("Location: " + cam.getLocation());
-        System.out.println("Direction: " + cam.getDirection());
-        System.out.println("Frustum L/R: " + cam.getFrustumLeft() + " / " + cam.getFrustumRight());
-        System.out.println("Frustum B/T: " + cam.getFrustumBottom() + " / " + cam.getFrustumTop());
-        System.out.println("Parallel: " + cam.isParallelProjection());
-        System.out.println("=================");
-        // DEBUG — confirm sceneNode children count
-        System.out.println("sceneNode children: " + sceneNode.getQuantity());
     }
 
     public void detach(Node root) {
-        root.detachChild(sceneNode);
+        guiNode.detachChild(sceneNode);
         guiNode.detachChild(convoBoxNode);
         guiNode.detachChild(promptNode);
     }
@@ -298,7 +275,7 @@ public class BackstageScene implements ActionListener {
         }
 
         // Update Wave geometry position
-        waveGeom.setLocalTranslation(WAVE_SCREEN_X, waveY, 1f);
+        waveGeom.setLocalTranslation(waveWorldX, waveY, 1f);
 
         consumeKeys();
     }
@@ -464,6 +441,7 @@ public class BackstageScene implements ActionListener {
         }
         g.setMaterial(m);
         g.setLocalTranslation(x, y, z);
+        g.setQueueBucket(com.jme3.renderer.queue.RenderQueue.Bucket.Gui);
         return g;
     }
 
@@ -482,6 +460,7 @@ public class BackstageScene implements ActionListener {
         }
         g.setMaterial(m);
         g.setLocalTranslation(x, y, z);
+        g.setQueueBucket(com.jme3.renderer.queue.RenderQueue.Bucket.Gui);
         return g;
     }
 
@@ -498,6 +477,7 @@ public class BackstageScene implements ActionListener {
         m.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
         g.setMaterial(m);
         g.setLocalTranslation(x, y, z);
+        g.setQueueBucket(com.jme3.renderer.queue.RenderQueue.Bucket.Gui);
         return g;
     }
 

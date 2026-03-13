@@ -54,10 +54,10 @@ public class SceneManager {
     }
 
     private void activateScene(GameState state) {
-        rootNode.detachAllChildren();
+        app.getGuiNode().detachAllChildren();
         switch (state) {
             case BACKSTAGE:
-                backstageScene.attach(rootNode);
+                backstageScene.attach(null); // guiNode managed inside BackstageScene
                 backstageScene.enter();
                 app.getViewPort().setBackgroundColor(new ColorRGBA(0.08f, 0.06f, 0.10f, 1f));
                 break;
