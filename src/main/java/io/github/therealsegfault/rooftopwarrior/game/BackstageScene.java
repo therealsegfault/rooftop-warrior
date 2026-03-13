@@ -158,9 +158,9 @@ public class BackstageScene implements ActionListener {
         sceneNode.attachChild(makeBox("CaseLid", 702f, GROUND_Y + 2f, 0.3f, 76f, 4f,
                 new ColorRGBA(0.35f, 0.30f, 0.40f, 1f)));
 
-        // Wave sprite (placeholder quad — swap for texture later)
-        waveGeom = makeBox("Wave", WAVE_SCREEN_X, GROUND_Y, 1f, WAVE_W, WAVE_H,
-                new ColorRGBA(0.50f, 0.75f, 0.90f, 1f));
+        // Wave sprite — loaded from sprites/wave.png
+        waveGeom = makeTexturedBox("Wave", WAVE_SCREEN_X, GROUND_Y, 1f, WAVE_W, WAVE_H,
+                "sprites/wave.png");
         sceneNode.attachChild(waveGeom);
 
         // ── GUI (screen-space, on guiNode) ────────────────────────────
@@ -227,14 +227,30 @@ public class BackstageScene implements ActionListener {
         guiNode.attachChild(convoBoxNode);
         guiNode.attachChild(promptNode);
 
-        // Set up orthographic camera — locked, pixel-perfect
-        app.getCamera().setParallelProjection(true);
-        float aspect = (float) app.getCamera().getWidth() / app.getCamera().getHeight();
-        app.getCamera().setFrustum(-1000f, 1000f,
-                -SH / 2f, SH / 2f,
-                -SW / 2f, SW / 2f);
-        app.getCamera().setLocation(new Vector3f(SW / 2f, SH / 2f, 100f));
-        app.getCamera().lookAt(new Vector3f(SW / 2f, SH / 2f, 0f), Vector3f.UNIT_Y);
+        // Orthographic camera — pixel-perfect, (0,0) = bottom-left
+        // jME setFrustum order: near, far, left, right, bottom, top
+        com.jme3.renderer.Camera cam = app.getCamera();
+        cam.setParallelProjection(true);
+        cam.setFrustumNear(-1000f);
+        cam.setFrustumFar(1000f);
+        cam.setFrustumLeft(0f);
+        cam.setFrustumRight(SW);
+        cam.setFrustumBottom(0f);
+        cam.setFrustumTop(SH);
+        // Position camera looking straight down -Z into the scene
+        cam.setLocation(new Vector3f(0f, 0f, 500f));
+        cam.lookAt(new Vector3f(0f, 0f, 0f), Vector3f.UNIT_Y);
+
+        // DEBUG — print camera state so we can see what it's actually doing
+        System.out.println("=== CAM DEBUG ===");
+        System.out.println("Location: " + cam.getLocation());
+        System.out.println("Direction: " + cam.getDirection());
+        System.out.println("Frustum L/R: " + cam.getFrustumLeft() + " / " + cam.getFrustumRight());
+        System.out.println("Frustum B/T: " + cam.getFrustumBottom() + " / " + cam.getFrustumTop());
+        System.out.println("Parallel: " + cam.isParallelProjection());
+        System.out.println("=================");
+        // DEBUG — confirm sceneNode children count
+        System.out.println("sceneNode children: " + sceneNode.getQuantity());
     }
 
     public void detach(Node root) {
@@ -442,6 +458,7 @@ public class BackstageScene implements ActionListener {
         Geometry g = new Geometry(name, new Quad(w, h));
         Material m = new Material(assets, "Common/MatDefs/Misc/Unshaded.j3md");
         m.setColor("Color", color);
+        m.getAdditionalRenderState().setFaceCullMode(RenderState.FaceCullMode.Off);
         if (color.a < 1f) {
             m.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
         }
@@ -459,9 +476,26 @@ public class BackstageScene implements ActionListener {
         Geometry g = new Geometry(name, new Quad(w, h));
         Material m = new Material(assets, "Common/MatDefs/Misc/Unshaded.j3md");
         m.setColor("Color", color);
+        m.getAdditionalRenderState().setFaceCullMode(RenderState.FaceCullMode.Off);
         if (color.a < 1f) {
             m.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
         }
+        g.setMaterial(m);
+        g.setLocalTranslation(x, y, z);
+        return g;
+    }
+
+    /**
+     * Textured quad in world space.
+     */
+    private Geometry makeTexturedBox(String name, float x, float y, float z,
+                                      float w, float h, String texturePath) {
+        Geometry g = new Geometry(name, new Quad(w, h));
+        Material m = new Material(assets, "Common/MatDefs/Misc/Unshaded.j3md");
+        Texture tex = assets.loadTexture(texturePath);
+        m.setTexture("ColorMap", tex);
+        m.getAdditionalRenderState().setFaceCullMode(RenderState.FaceCullMode.Off);
+        m.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
         g.setMaterial(m);
         g.setLocalTranslation(x, y, z);
         return g;
