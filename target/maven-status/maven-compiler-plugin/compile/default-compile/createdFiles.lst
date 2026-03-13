@@ -1,11 +1,9 @@
-io/github/therealsegfault/rooftopwarrior/game/RooftopScene.class
-io/github/therealsegfault/rooftopwarrior/game/ChaseScene.class
-io/github/therealsegfault/rooftopwarrior/game/StreetScene.class
+io/github/therealsegfault/rooftopwarrior/game/FadeOverlay.class
+io/github/therealsegfault/rooftopwarrior/game/BackstageScene.class
 io/github/therealsegfault/rooftopwarrior/game/SceneManager$1.class
 io/github/therealsegfault/rooftopwarrior/game/GameState.class
 io/github/therealsegfault/rooftopwarrior/window/DesktopLauncher.class
-io/github/therealsegfault/rooftopwarrior/game/LateScene.class
 io/github/therealsegfault/rooftopwarrior/game/PWLGame.class
-io/github/therealsegfault/rooftopwarrior/game/LadderDownScene.class
 io/github/therealsegfault/rooftopwarrior/game/SceneManager.class
+io/github/therealsegfault/rooftopwarrior/game/BackstageScene$Stage.class
 io/github/therealsegfault/rooftopwarrior/game/Platform.class

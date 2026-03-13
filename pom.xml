@@ -3,7 +3,6 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.therealsegfault</groupId>
     <artifactId>rooftop-warrior</artifactId>
@@ -13,53 +12,44 @@
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <gdx.version>1.12.1</gdx.version>
+        <jme.version>3.6.1-stable</jme.version>
     </properties>
 
-    <!-- JitPack for ldtk-gdx -->
-    <repositories>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
-
     <dependencies>
-
-        <!-- LibGDX core -->
+        <!-- jME core -->
         <dependency>
-            <groupId>com.badlogicgames.gdx</groupId>
-            <artifactId>gdx</artifactId>
-            <version>${gdx.version}</version>
+            <groupId>org.jmonkeyengine</groupId>
+            <artifactId>jme3-core</artifactId>
+            <version>${jme.version}</version>
         </dependency>
-
-        <!-- Desktop backend (LWJGL3) -->
+        <!-- Desktop LWJGL3 backend -->
         <dependency>
-            <groupId>com.badlogicgames.gdx</groupId>
-            <artifactId>gdx-backend-lwjgl3</artifactId>
-            <version>${gdx.version}</version>
+            <groupId>org.jmonkeyengine</groupId>
+            <artifactId>jme3-lwjgl3</artifactId>
+            <version>${jme.version}</version>
         </dependency>
-
-        <!-- Native desktop libs -->
+        <!-- Desktop utilities + asset pipeline -->
         <dependency>
-            <groupId>com.badlogicgames.gdx</groupId>
-            <artifactId>gdx-platform</artifactId>
-            <version>${gdx.version}</version>
-            <classifier>natives-desktop</classifier>
+            <groupId>org.jmonkeyengine</groupId>
+            <artifactId>jme3-desktop</artifactId>
+            <version>${jme.version}</version>
         </dependency>
-
-        <!-- LDtk-GDX via JitPack -->
+        <!-- Post-process effects: god rays, bloom, etc. -->
         <dependency>
-            <groupId>com.github.RedSponge</groupId>
-            <artifactId>ldtk-gdx</artifactId>
-            <version>v0.2</version>
+            <groupId>org.jmonkeyengine</groupId>
+            <artifactId>jme3-effects</artifactId>
+            <version>${jme.version}</version>
         </dependency>
-
+        <!-- Texture/model format plugins (PNG, OBJ, etc.) -->
+        <dependency>
+            <groupId>org.jmonkeyengine</groupId>
+            <artifactId>jme3-plugins</artifactId>
+            <version>${jme.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <!-- Runnable jar with all dependencies bundled -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -85,5 +75,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

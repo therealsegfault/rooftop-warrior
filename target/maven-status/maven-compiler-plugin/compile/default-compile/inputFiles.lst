@@ -1,10 +1,7 @@
-/Users/samuelpedestal/Maven Projects/GitHub/rooftop-warrior/src/main/java/io/github/therealsegfault/rooftopwarrior/game/ChaseScene.java
+/Users/samuelpedestal/Maven Projects/GitHub/rooftop-warrior/src/main/java/io/github/therealsegfault/rooftopwarrior/game/BackstageScene.java
+/Users/samuelpedestal/Maven Projects/GitHub/rooftop-warrior/src/main/java/io/github/therealsegfault/rooftopwarrior/game/FadeOverlay.java
 /Users/samuelpedestal/Maven Projects/GitHub/rooftop-warrior/src/main/java/io/github/therealsegfault/rooftopwarrior/game/GameState.java
-/Users/samuelpedestal/Maven Projects/GitHub/rooftop-warrior/src/main/java/io/github/therealsegfault/rooftopwarrior/game/LadderDownScene.java
-/Users/samuelpedestal/Maven Projects/GitHub/rooftop-warrior/src/main/java/io/github/therealsegfault/rooftopwarrior/game/LateScene.java
 /Users/samuelpedestal/Maven Projects/GitHub/rooftop-warrior/src/main/java/io/github/therealsegfault/rooftopwarrior/game/PWLGame.java
 /Users/samuelpedestal/Maven Projects/GitHub/rooftop-warrior/src/main/java/io/github/therealsegfault/rooftopwarrior/game/Platform.java
-/Users/samuelpedestal/Maven Projects/GitHub/rooftop-warrior/src/main/java/io/github/therealsegfault/rooftopwarrior/game/RooftopScene.java
 /Users/samuelpedestal/Maven Projects/GitHub/rooftop-warrior/src/main/java/io/github/therealsegfault/rooftopwarrior/game/SceneManager.java
-/Users/samuelpedestal/Maven Projects/GitHub/rooftop-warrior/src/main/java/io/github/therealsegfault/rooftopwarrior/game/StreetScene.java
 /Users/samuelpedestal/Maven Projects/GitHub/rooftop-warrior/src/main/java/io/github/therealsegfault/rooftopwarrior/window/DesktopLauncher.java

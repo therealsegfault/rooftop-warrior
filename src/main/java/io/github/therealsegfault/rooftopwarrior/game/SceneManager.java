@@ -1,43 +1,75 @@
 package io.github.therealsegfault.rooftopwarrior.game;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.jme3.app.SimpleApplication;
+import com.jme3.math.ColorRGBA;
+import com.jme3.scene.Node;
 
+/**
+ * SceneManager owns all scenes and drives transitions.
+ *
+ * In jME the scene graph is the rendering pipeline.
+ * Each scene owns a Node subtree. On transition we detach the
+ * current scene's node and attach the next one.
+ *
+ * Fade transitions work by tinting the viewport background and
+ * driving a full-screen quad alpha — same 0.4s out / 0.7s hold /
+ * 0.4s in timing as before.
+ */
 public class SceneManager {
 
-    private GameState currentState = GameState.STREET;
+    private final SimpleApplication app;
+    private final Node rootNode;
 
-    // Transition state
-    private boolean transitioning   = false;
-    private float   transitionTimer = 0f;
-    private float   alpha           = 0f;
-    private GameState pendingState  = null;
+    private GameState currentState = GameState.BACKSTAGE;
 
-    // Timing: 0.4s fade out, 0.7s hold, 0.4s fade in = 1.5s total
+    // Scenes
+    private BackstageScene backstageScene;
+    // TODO: add remaining scenes as they are ported
+
+    // Transition
+    private boolean   transitioning   = false;
+    private float     transitionTimer = 0f;
+    private GameState pendingState    = null;
+    private float     alpha           = 0f;
+
     private static final float FADE_OUT_END = 0.4f;
     private static final float HOLD_END     = 1.1f;
     private static final float FADE_IN_END  = 1.5f;
 
-    private StreetScene     streetScene;
-    private RooftopScene    rooftopScene;
-    private LadderDownScene ladderDownScene;
-    private ChaseScene      chaseScene;
-    private LateScene       lateScene;
+    // Fade overlay — full-screen quad driven by alpha
+    private FadeOverlay fadeOverlay;
 
-    public SceneManager(SpriteBatch batch, ShapeRenderer shapes, BitmapFont font) {
-        streetScene     = new StreetScene(batch, shapes, font, this);
-        rooftopScene    = new RooftopScene(batch, shapes, font, this);
-        ladderDownScene = new LadderDownScene(batch, shapes, font, this);
-        chaseScene      = new ChaseScene(batch, shapes, font, this);
-        lateScene       = new LateScene(batch, shapes, font, this);
+    public SceneManager(SimpleApplication app) {
+        this.app      = app;
+        this.rootNode = app.getRootNode();
     }
 
-    public void update(float delta) {
+    public void init() {
+        fadeOverlay    = new FadeOverlay(app);
+
+        backstageScene = new BackstageScene(app, this);
+
+        // Attach starting scene
+        activateScene(currentState);
+    }
+
+    private void activateScene(GameState state) {
+        rootNode.detachAllChildren();
+        switch (state) {
+            case BACKSTAGE:
+                backstageScene.attach(rootNode);
+                backstageScene.enter();
+                app.getViewPort().setBackgroundColor(new ColorRGBA(0.08f, 0.06f, 0.10f, 1f));
+                break;
+            // TODO: remaining cases as scenes are ported
+            default:
+                break;
+        }
+    }
+
+    public void update(float tpf) {
         if (transitioning) {
-            transitionTimer += delta;
+            transitionTimer += tpf;
 
             if (transitionTimer <= FADE_OUT_END) {
                 alpha = transitionTimer / FADE_OUT_END;
@@ -45,10 +77,7 @@ public class SceneManager {
                 alpha = 1f;
                 if (pendingState != null) {
                     currentState = pendingState;
-                    if (currentState == GameState.ROOFTOP)     rooftopScene.enter();
-                    if (currentState == GameState.LADDER_DOWN) ladderDownScene.enter();
-                    if (currentState == GameState.CHASE)       chaseScene.enter();
-                    if (currentState == GameState.LATE)        lateScene.enter();
+                    activateScene(currentState);
                     pendingState = null;
                 }
             } else if (transitionTimer <= FADE_IN_END) {
@@ -58,58 +87,14 @@ public class SceneManager {
                 transitioning   = false;
                 transitionTimer = 0f;
             }
+
+            fadeOverlay.setAlpha(alpha);
             return;
         }
 
         switch (currentState) {
-            case STREET:
-            case LADDER:
-                streetScene.update(delta);
-                break;
-            case ROOFTOP:
-                rooftopScene.update(delta);
-                break;
-            case LADDER_DOWN:
-                ladderDownScene.update(delta);
-                break;
-            case CHASE:
-                chaseScene.update(delta);
-                break;
-            case LATE:
-                lateScene.update(delta);
-                break;
-        }
-    }
-
-    public void draw(SpriteBatch batch, ShapeRenderer shapes) {
-        switch (currentState) {
-            case STREET:
-            case LADDER:
-                streetScene.draw();
-                break;
-            case ROOFTOP:
-                rooftopScene.draw();
-                break;
-            case LADDER_DOWN:
-                ladderDownScene.draw();
-                break;
-            case CHASE:
-                chaseScene.draw();
-                break;
-            case LATE:
-                lateScene.draw();
-                break;
-        }
-
-        // Fade overlay
-        if (transitioning && alpha > 0f) {
-            Gdx.gl.glEnable(GL20.GL_BLEND);
-            Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-            shapes.begin(ShapeRenderer.ShapeType.Filled);
-            shapes.setColor(0f, 0f, 0f, alpha);
-            shapes.rect(0, 0, 960f, 480f);
-            shapes.end();
-            Gdx.gl.glDisable(GL20.GL_BLEND);
+            case BACKSTAGE: backstageScene.update(tpf); break;
+            default: break;
         }
     }
 
@@ -121,6 +106,10 @@ public class SceneManager {
         alpha           = 0f;
     }
 
+    public void setState(GameState state) {
+        currentState = state;
+    }
+
     public GameState getCurrentState() { return currentState; }
-    public void setState(GameState state) { this.currentState = state; }
+    public SimpleApplication getApp()  { return app; }
 }

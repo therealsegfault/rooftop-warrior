@@ -1,40 +1,38 @@
 package io.github.therealsegfault.rooftopwarrior.game;
 
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.jme3.app.SimpleApplication;
+import com.jme3.font.BitmapFont;
+import com.jme3.math.ColorRGBA;
+import com.jme3.renderer.RenderManager;
 
-public class PWLGame extends ApplicationAdapter {
+public class PWLGame extends SimpleApplication {
 
-    private SpriteBatch batch;
-    private ShapeRenderer shapes;
-    private BitmapFont font;
     private SceneManager sceneManager;
 
     @Override
-    public void create() {
-        batch        = new SpriteBatch();
-        shapes       = new ShapeRenderer();
-        font         = new BitmapFont();
-        sceneManager = new SceneManager(batch, shapes, font);
+    public void simpleInitApp() {
+        // Disable default jME camera controls — we manage the camera ourselves
+        flyCam.setEnabled(false);
+
+        // Black background by default; scenes override via viewport
+        viewPort.setBackgroundColor(ColorRGBA.Black);
+
+        // Hide default stats and FPS display
+        setDisplayStatView(false);
+        setDisplayFps(false);
+
+        sceneManager = new SceneManager(this);
+        sceneManager.init();
     }
 
     @Override
-    public void render() {
-        float delta = Gdx.graphics.getDeltaTime();
-        Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        sceneManager.update(delta);
-        sceneManager.draw(batch, shapes);
+    public void simpleUpdate(float tpf) {
+        sceneManager.update(tpf);
     }
 
     @Override
-    public void dispose() {
-        batch.dispose();
-        shapes.dispose();
-        font.dispose();
+    public void simpleRender(RenderManager rm) {
+        // jME handles rendering via the scene graph automatically.
+        // SceneManager manipulates the scene graph in update().
     }
 }
